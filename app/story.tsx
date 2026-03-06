@@ -2,13 +2,19 @@ import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View, ActivityIndicator } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import ScreenWrapper from "../components/ScreenWrapper";
-import { generateStory } from "../services/openapi";
+import { generateStory, type StoryControls } from "../services/openapi";
 import { theme } from "../constants/theme";
 
 export default function ResultScreen() {
-  const { topic, description } = useLocalSearchParams<{
+  const { topic, description, genre, tone, targetAge, storyLength, pov, language } = useLocalSearchParams<{
     topic: string;
     description: string;
+    genre: string;
+    tone: string;
+    targetAge: string;
+    storyLength: string;
+    pov: string;
+    language: string;
   }>();
 
   const [story, setStory] = useState("");
@@ -20,7 +26,15 @@ export default function ResultScreen() {
       try {
         setLoading(true);
         setError("");
-        const result = await generateStory(topic, description);
+        const controls: StoryControls = {
+          genre: genre || "Fantasy",
+          tone: tone || "Whimsical",
+          targetAge: targetAge || "Adults",
+          storyLength: storyLength || "Medium (600-900 words)",
+          pov: pov || "Third Person Limited",
+          language: language || "English",
+        };
+        const result = await generateStory(topic, description, controls);
         setStory(result);
       } catch (err: any) {
         setError(err.message || "Something went wrong");
@@ -30,7 +44,7 @@ export default function ResultScreen() {
     };
 
     run();
-  }, [topic, description]);
+  }, [topic, description, genre, tone, targetAge, storyLength, pov, language]);
 
   return (
     <ScreenWrapper>

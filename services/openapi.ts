@@ -1,21 +1,41 @@
 const API_KEY = process.env.EXPO_PUBLIC_GITHUB_TOKEN;
 
-export async function generateStory(topic: string, description: string) {
+export type StoryControls = {
+  genre: string;
+  tone: string;
+  targetAge: string;
+  storyLength: string;
+  pov: string;
+  language: string;
+};
+
+export async function generateStory(
+  topic: string,
+  description: string,
+  controls: StoryControls
+) {
 
   const prompt = `
 You are a creative story writer.
 
-Write a short, engaging story based on the following:
+Write a polished story using the exact creative controls below.
 
 Topic: ${topic}
 Description: ${description}
+Genre: ${controls.genre}
+Tone: ${controls.tone}
+Target Age: ${controls.targetAge}
+Story Length: ${controls.storyLength}
+Point of View: ${controls.pov}
+Language: ${controls.language}
 
 Rules:
-- Make it imaginative and easy to read
-- Around 400 to 600 words
-- Give the story a title
-- Use paragraphs
-- Make the ending satisfying
+- Follow the selected genre, tone, target age, POV, and language precisely
+- Match the selected story length range as closely as possible
+- Keep wording and complexity appropriate for the target age
+- Give the story a strong title in the selected language
+- Use clear paragraphs and make the ending satisfying
+- Return only the story text (no extra notes or headings)
 `;
 
   console.log("KEY:", API_KEY?.slice(0, 20) + "...");
