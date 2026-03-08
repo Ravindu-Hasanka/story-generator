@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 import { SafeAreaView, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme } from "../constants/theme";
 
 type Props = {
   children: ReactNode;

@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View, ActivityIndicator } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import ScreenWrapper from "../components/ScreenWrapper";
 import { generateStory, type StoryControls } from "../services/openapi";
+import { saveStory } from "../services/storyLibrary";
 import { theme } from "../constants/theme";
+import PrimaryButton from "../components/PrimaryButton";
 
 export default function ResultScreen() {
   const { topic, description, genre, tone, targetAge, storyLength, pov, language } = useLocalSearchParams<{
@@ -20,20 +22,26 @@ export default function ResultScreen() {
   const [story, setStory] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+
+  const controls: StoryControls = useMemo(
+    () => ({
+      genre: genre || "Fantasy",
+      tone: tone || "Whimsical",
+      targetAge: targetAge || "Adults",
+      storyLength: storyLength || "Medium (600-900 words)",
+      pov: pov || "Third Person Limited",
+      language: language || "English",
+    }),
+    [genre, tone, targetAge, storyLength, pov, language]
+  );
 
   useEffect(() => {
     const run = async () => {
       try {
         setLoading(true);
         setError("");
-        const controls: StoryControls = {
-          genre: genre || "Fantasy",
-          tone: tone || "Whimsical",
-          targetAge: targetAge || "Adults",
-          storyLength: storyLength || "Medium (600-900 words)",
-          pov: pov || "Third Person Limited",
-          language: language || "English",
-        };
         const result = await generateStory(topic, description, controls);
         setStory(result);
       } catch (err: any) {
@@ -44,7 +52,26 @@ export default function ResultScreen() {
     };
 
     run();
-  }, [topic, description, genre, tone, targetAge, storyLength, pov, language]);
+  }, [topic, description, controls]);
+
+  const onSave = async () => {
+    if (!story.trim()) return;
+    try {
+      setSaving(true);
+      setSaveMessage("");
+      await saveStory({
+        topic: topic || "",
+        description: description || "",
+        content: story,
+        controls,
+      });
+      setSaveMessage("Saved to My Stories");
+    } catch {
+      setSaveMessage("Failed to save story");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <ScreenWrapper>
@@ -61,9 +88,14 @@ export default function ResultScreen() {
         ) : error ? (
           <Text style={styles.error}>{error}</Text>
         ) : (
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <Text style={styles.storyText}>{story}</Text>
-          </ScrollView>
+          <>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.storyText}>{story}</Text>
+            </ScrollView>
+            <PrimaryButton title={saving ? "Saving..." : "Save to My Stories"} onPress={onSave} disabled={saving} />
+            <PrimaryButton title="Open My Stories" onPress={() => router.push("/library")} />
+            {!!saveMessage && <Text style={styles.saveMessage}>{saveMessage}</Text>}
+          </>
         )}
       </View>
     </ScreenWrapper>
@@ -113,5 +145,11 @@ const styles = StyleSheet.create({
     color: "#FCA5A5",
     fontSize: 16,
     lineHeight: 24,
+  },
+  saveMessage: {
+    color: "#A7F3D0",
+    textAlign: "center",
+    marginTop: 8,
+    fontWeight: "600",
   },
 });
